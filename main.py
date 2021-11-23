@@ -48,16 +48,16 @@ def main():
     url = namespace.link
     parsed = urlparse(url)
     test_bitlink = parsed.netloc + parsed.path
-    a1 = partial(count_clicks, parsed.netloc + parsed.path)
-    m1 = partial(shorten_link, token, url)
+    count_check = partial(count_clicks, parsed.netloc + parsed.path)
+    do_short = partial(shorten_link, token, url)
     if is_bitlink(test_bitlink):
         try:
-            run(a1)
+            run(count_check)
         except requests.exceptions.HTTPError:
             exit('Ошибка подсчета кликов!')
     else:
         try:
-            run(m1)
+            run(do_short)
         except requests.exceptions.HTTPError:
             exit('Ошибка создания Битлинка!')
 
