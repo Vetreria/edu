@@ -1,23 +1,15 @@
-from dotenv import load_dotenv, find_dotenv
-load_dotenv(find_dotenv())
+import dotenv
 import requests
 from urllib.parse import urlparse
 import os
 import argparse
 import sys
-# from dotenv import load_dotenv, find_dotenv
-# load_dotenv(find_dotenv())
-# parser = argparse.ArgumentParser()
-# parser.add_argument("url", help="ссылка для проверки")
-# args = parser.parse_args()
-
-token = os.getenv('BL_TOKEN')
+from functools import partial
 
 
-def createParser ():
+def createParser():
     parser = argparse.ArgumentParser()
-    parser.add_argument ('-l', '--link')
- 
+    parser.add_argument('-l', '--link')
     return parser
 
 
@@ -26,7 +18,8 @@ def shorten_link(token, url):
         'https://api-ssl.bitly.com/v4/bitlinks',
         headers={
           'Authorization': token}, json={"long_url": url, })
-    return response.json()['link']
+    response.raise_for_status()
+    return 'Битлинк ' + response.json()['link']
 
 
 def count_clicks(bitlink):
@@ -34,7 +27,8 @@ def count_clicks(bitlink):
         f'https://api-ssl.bitly.com/v4/bitlinks/{bitlink}/clicks/summary',
         headers={'Authorization': token}, params={'units': -1, }
     )
-    return response.json()['total_clicks']
+    response.raise_for_status()
+    return 'Всего кликов ' + str(response.json()['total_clicks'])
 
 
 def is_bitlink(test_bitlink):
@@ -44,29 +38,31 @@ def is_bitlink(test_bitlink):
     return response.ok
 
 
+def run(func):
+    print(func())
+
+
 def main():
     parser = createParser()
     namespace = parser.parse_args(sys.argv[1:])
     url = namespace.link
-    
-    # url = input("Введите URL начиная с протокола(Например - https:// ):")
-    
     parsed = urlparse(url)
     test_bitlink = parsed.netloc + parsed.path
+    a1 = partial(count_clicks, parsed.netloc + parsed.path)
+    m1 = partial(shorten_link, token, url)
     if is_bitlink(test_bitlink):
-      
-          try:
-            bitlink = test_bitlink
-            print('Всего кликов', count_clicks(bitlink))
-
-          except requests.exceptions.HTTPError:
+        try:
+            run(a1)
+        except requests.exceptions.HTTPError:
             exit('Ошибка подсчета кликов!')
     else:
         try:
-            print('Битлинк', shorten_link(token, url))
+            run(m1)
         except requests.exceptions.HTTPError:
             exit('Ошибка создания Битлинка!')
 
 
 if __name__ == '__main__':
+    dotenv.load_dotenv()
+    token = os.getenv('BITLINK_TOKEN')
     main()
