@@ -4,12 +4,13 @@ from urllib.parse import urlparse
 import os
 import argparse
 import sys
-from functools import partial
+
+# token = os.getenv('BL_TOKEN')
 
 
-def createParser():
+def createParser ():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-l', '--link')
+    parser.add_argument ('-l', '--link')
     return parser
 
 
@@ -22,7 +23,7 @@ def shorten_link(token, url):
     return 'Битлинк {0}'.format(response.json()['link'])
 
 
-def count_clicks(token, bitlink):
+def count_clicks(bitlink, token):
     response = requests.get(
         f'https://api-ssl.bitly.com/v4/bitlinks/{bitlink}/clicks/summary',
         headers={'Authorization': token}, params={'units': -1, }
@@ -38,10 +39,6 @@ def is_bitlink(test_bitlink, token):
     return response.ok
 
 
-def run(func):
-    print(func())
-
-
 def main():
     dotenv.load_dotenv()
     token = os.getenv('BITLINK_TOKEN')
@@ -51,13 +48,16 @@ def main():
     parsed = urlparse(url)
     test_bitlink = parsed.netloc + parsed.path
     if is_bitlink(test_bitlink, token):
-        try:
-            run(partial(count_clicks, token, parsed.netloc + parsed.path))
-        except requests.exceptions.HTTPError:
+      
+          try:
+            bitlink = test_bitlink
+            print(count_clicks(bitlink, token))
+
+          except requests.exceptions.HTTPError:
             exit('Ошибка подсчета кликов!')
     else:
         try:
-            run(partial(shorten_link, token, url))
+            print(shorten_link(token, url))
         except requests.exceptions.HTTPError:
             exit('Ошибка создания Битлинка!')
 
