@@ -5,12 +5,10 @@ import os
 import argparse
 import sys
 
-# token = os.getenv('BL_TOKEN')
 
-
-def createParser ():
+def createParser():
     parser = argparse.ArgumentParser()
-    parser.add_argument ('-l', '--link')
+    parser.add_argument('-l', '--link')
     return parser
 
 
@@ -43,17 +41,16 @@ def main():
     dotenv.load_dotenv()
     token = os.getenv('BITLINK_TOKEN')
     parser = createParser()
-    namespace = parser.parse_args(sys.argv[1:])
+    namespace = parser.parse_args()
     url = namespace.link
     parsed = urlparse(url)
     test_bitlink = parsed.netloc + parsed.path
     if is_bitlink(test_bitlink, token):
-      
-          try:
+        try:
             bitlink = test_bitlink
             print(count_clicks(bitlink, token))
 
-          except requests.exceptions.HTTPError:
+        except requests.exceptions.HTTPError:
             exit('Ошибка подсчета кликов!')
     else:
         try:
